@@ -1,0 +1,520 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>SparkleMan</title>
+  <meta name="author" content="SparkleMan">
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  
+  <meta property="og:site_name" content="SparkleMan"/>
+
+  
+    <meta property="og:image" content="undefined"/>
+  
+
+  <link href="/blog/favicon.png" rel="icon">
+  <link rel="alternate" href="/blog/atom.xml" title="SparkleMan" type="application/atom+xml">
+  <link rel="stylesheet" href="/blog/css/style.css" media="screen" type="text/css">
+  <!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+  
+</head>
+
+
+<body>
+  <header id="header" class="inner"><div class="alignleft">
+  <h1><a href="/blog/">SparkleMan</a></h1>
+  <h2><a href="/blog/">A ship in port is safe, but that is not what ships are built for.</a></h2>
+</div>
+<nav id="main-nav" class="alignright">
+  <ul>
+    
+      <li><a href="/blog">Home</a></li>
+    
+      <li><a href="/blog/archives">Archives</a></li>
+    
+  </ul>
+  <div class="clearfix"></div>
+</nav>
+<div class="clearfix"></div></header>
+  <div id="content" class="inner">
+    <div id="main-col" class="alignleft"><div id="wrapper">
+  <article class="post">
+  
+    <div class="gallery">
+  <div class="photoset">
+    
+      <img src="">
+    
+  </div>
+  <div class="control">
+    <div class="prev"></div>
+    <div class="next"></div>
+  </div>
+</div>
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2014-03-03T07:41:09.000Z"><a href="/blog/2014/03/03/promise_anti_patterns/">3月 3 2014</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/blog/2014/03/03/promise_anti_patterns/">Prmoise反模式</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>翻译自<a href="http://taoofcode.net/promise-anti-patterns/" target="_blank">Promise Anti Promises</a>，这不是简单翻译，而是在自己理解上做的翻译，因此本文并不是逐句翻译的文章。</p>
+<p>说明：下述代码都是基于promise规范实现的库：<a href="https://github.com/kriskowal/q" target="_blank">q</a></p>
+<h2 id="-promise">嵌套Promise</h2>
+<p>这段代码要做的事情，就是等待两个promise完成后在做其它事情。</p>
+<figure class="highlight [javascript]"><figcaption><span>[Netsted Promise - Bad] </span></figcaption><table><tr><td class="gutter"><pre>1
+2
+3
+4
+5
+</pre></td><td class="code"><pre>loadSomething().<span class="keyword">then</span>(<span class="function"><span class="keyword">function</span><span class="params">(something)</span></span> {  
+    loadAnotherThing().<span class="keyword">then</span>(<span class="function"><span class="keyword">function</span><span class="params">(another)</span></span> {
+                    doSomethingOnThem(something, another);
+    });
+});
+</pre></td></tr></table></figure>
+
+<p>之所以写出这种代码，在于对于promise的api不了解，promise提供了一个 <code>all</code> 方法来完成上面事情，因此更好的代码应该这样：</p>
+<figure class="highlight [javascript]"><figcaption><span>[Netsted Promise - Fixed] </span></figcaption><table><tr><td class="gutter"><pre>1
+2
+3
+4
+</pre></td><td class="code"><pre>q.all([loadSomething(), loadAnotherThing()])  
+    .spread(<span class="function"><span class="keyword">function</span><span class="params">(something, another)</span> {</span>
+        doSomethingOnThem(something, another);
+});
+</pre></td></tr></table></figure>
+
+<p><code>all</code> 方法会等待所有传入该方法的promise都完成才触发完成状态。<code>spread</code> 方法会把返回的数组结果分拆成一个个元素作为参数传入回调函数里。</p>
+<h2 id="-">破裂的链式写法</h2>
+<p>promise出现可以让我们以更加自然的链式写法来书写代码，但是当出现如下这种代码时候，会有啥问题呢？</p>
+<figure class="highlight [javascript]"><figcaption><span>[Broken Chain - Bad] </span></figcaption><table><tr><td class="gutter"><pre>1
+2
+3
+4
+5
+6
+7
+8
+</pre></td><td class="code"><pre><span class="function"><span class="keyword">function</span> <span class="title">anAsyncCall</span><span class="params">()</span> {</span>  
+    <span class="keyword">var</span> promise = doSomethingAsync();
+    promise.then(<span class="function"><span class="keyword">function</span><span class="params">()</span> {</span>
+        somethingComplicated();
+    });
+
+    <span class="keyword">return</span> promise;
+}
+</pre></td></tr></table></figure>
+
+<p>首先，必须清楚 <code>anAsyncCall</code> 方法返回的promise跟该方法内部 <code>then</code> 返回的promise并不一定是同一个promise，
+<a href="http://promises-aplus.github.io/promises-spec/" target="_blank">Promise A+</a>规范并不要求链式写法过程返回的promise
+必须跟一开始的promise是同一个promise：
+参见
+<a href="http://wiki.commonjs.org/wiki/Promises/A" target="_blank">Promise A</a>规范
+和
+<a href="http://promises-aplus.github.io/promises-spec/" target="_blank">Prmoise A+</a>规范
+<a href="https://github.com/promises-aplus/promises-spec/blob/master/differences-from-promises-a.md" target="_blank">比较</a>。</p>
+<p>因此， 这可能导致一个问题，假设 <code>then</code> 回调里的 <code>somethingComplicated</code> 方法出错了，该异常将不会得到处理！</p>
+<p>更好的实现代码：</p>
+<figure class="highlight [javascript]"><figcaption><span>[Broken Chain - Fixed] </span></figcaption><table><tr><td class="gutter"><pre>1
+2
+3
+4
+5
+6
+</pre></td><td class="code"><pre><span class="function"><span class="keyword">function</span> <span class="title">anAsyncCall</span><span class="params">()</span> {</span>  
+    <span class="keyword">var</span> promise = doSomethingAsync();
+    <span class="keyword">return</span> promise.then(<span class="function"><span class="keyword">function</span><span class="params">()</span> {</span>
+        somethingComplicated()
+    });   
+}
+</pre></td></tr></table></figure>
+
+<h2 id="-">混乱的集合操作</h2>
+<p>下面代码做的事情，就是对给定的数组集合的每个元素都执行异步的操作，然后收集所有元素的异步操作的执行结果。</p>
+<figure class="highlight [javascript]"><figcaption><span>[Collection Kerfuffle - Bad] </span></figcaption><table><tr><td class="gutter"><pre>1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+</pre></td><td class="code"><pre><span class="function"><span class="keyword">function</span> <span class="title">workMyCollection</span><span class="params">(arr)</span> {  </span>
+    var resultArr = <span class="matrix">[]</span>;
+    <span class="function"><span class="keyword">function</span> <span class="title">_recursive</span><span class="params">(idx)</span> {</span>
+        <span class="keyword">if</span> (idx &gt;= <span class="transposed_variable">resultArr.</span><span class="built_in">length</span>) <span class="keyword">return</span> resultArr;
+
+        <span class="keyword">return</span> doSomethingAsync(arr<span class="matrix">[idx]</span>).<span class="keyword">then</span>(<span class="function"><span class="keyword">function</span><span class="params">(res)</span> {</span>
+            <span class="transposed_variable">resultArr.</span>push(res);
+            <span class="keyword">return</span> _recursive(idx + <span class="number">1</span>);
+        });
+    }
+
+    <span class="keyword">return</span> _recursive(<span class="number">0</span>);
+}
+</pre></td></tr></table></figure>
+
+<p>其实上面操作就是一个map/readuce过程，可以基于数组的map和reduce方法来完成，
+当然这里不考虑一些老旧浏览器不支持map/reduce方法问题：</p>
+<figure class="highlight [javascript]"><figcaption><span>[Collection Kerfuffle - Fixed - in Parallel] </span></figcaption><table><tr><td class="gutter"><pre>1
+2
+3
+4
+5
+</pre></td><td class="code"><pre><span class="function"><span class="keyword">function</span> <span class="title">workMyCollection</span><span class="params">(arr)</span> {</span>  
+    <span class="keyword">return</span> q.all(arr.map(<span class="function"><span class="keyword">function</span><span class="params">(item)</span> {</span>
+        <span class="keyword">return</span> doSomethingAsync(item);
+    }));    
+}
+</pre></td></tr></table></figure>
+
+<p>上述代码，基于 <code>all</code> 方法来完成，对于array元素为并行处理，如果想串行处理数组元素，可以基于
+数组的reduce方法来完成：</p>
+<figure class="highlight [javascript]"><figcaption><span>[Collection Kerfuffle - Fixed - in Series] </span></figcaption><table><tr><td class="gutter"><pre>1
+2
+3
+4
+5
+6
+7
+</pre></td><td class="code"><pre><span class="function"><span class="keyword">function</span> <span class="title">workMyCollection</span><span class="params">(arr)</span></span> {  
+    <span class="keyword">return</span> arr.reduce(<span class="function"><span class="keyword">function</span><span class="params">(promise, item)</span></span> {
+        <span class="keyword">return</span> promise.<span class="keyword">then</span>(<span class="function"><span class="keyword">function</span><span class="params">(result)</span></span> {
+            <span class="keyword">return</span> doSomethingAsyncWithResult(item, result);
+        });        
+    }, q());
+}
+</pre></td></tr></table></figure>
+
+<h2 id="the-ghost-promise-">The Ghost Promise (不知道咋翻译。。)</h2>
+<p>我们通常会碰到这样的需求，有些情况下需要返回异步操作的promise，但有时候却不需要，比如缓存过程，比如第一次不在缓存，就
+需要异步操作，下次再请求，如果已经完成了，就直接返回已经得到的结果：</p>
+<figure class="highlight [javascript]"><figcaption><span>[Ghost Promise - Bad] </span></figcaption><table><tr><td class="gutter"><pre>1
+2
+3
+4
+5
+6
+7
+8
+9
+</pre></td><td class="code"><pre><span class="keyword">var</span> promise;  
+<span class="keyword">if</span> (asyncCallNeeded)  
+    promise = doSomethingAsync();
+<span class="keyword">else</span>  
+    promise = Q.resolve(<span class="number">42</span>);
+
+promise.<span class="keyword">then</span>(<span class="function"><span class="keyword">function</span><span class="params">()</span> <span class="comment">{  
+    doSomethingCool();
+}</span>);</span>
+</pre></td></tr></table></figure>
+
+<p>虽然上面代码在反模式里并不算太糟，但是还有更好的方式来实现，当然这里依托于q库实现：</p>
+<figure class="highlight [javascript]"><figcaption><span>[Ghost Promise - Good] </span></figcaption><table><tr><td class="gutter"><pre>1
+2
+3
+4
+5
+6
+7
+8
+9
+</pre></td><td class="code"><pre>Q(asyncCallNeeded ? doSomethingAsync() : <span class="number">42</span>)  
+    .<span class="keyword">then</span>(
+        <span class="function"><span class="keyword">function</span><span class="params">(value)</span>{</span>
+            doSomethingGood();
+        })
+    .<span class="keyword">catch</span>( 
+        <span class="function"><span class="keyword">function</span><span class="params">(err)</span> {</span>
+            handleTheError();
+        });
+</pre></td></tr></table></figure>
+
+<h2 id="-">过度专注错误的处理</h2>
+<p>虽然下面在then里进行错误处理，貌似没啥问题，这种习惯性错误处理方式，可能导致漏掉一些潜在可能错误处理，
+比如如果 <code>somethingElseAsync</code> 方法抛出错误，将导致错误没有得到捕获处理。</p>
+<figure class="highlight [javascript]"><figcaption><span>[Overly Keen Error Handler - Bad] </span></figcaption><table><tr><td class="gutter"><pre>1
+2
+3
+4
+5
+6
+7
+</pre></td><td class="code"><pre>somethingAsync.<span class="keyword">then</span>(  
+    <span class="function"><span class="keyword">function</span><span class="params">()</span></span> {
+        <span class="keyword">return</span> somethingElseAsync();
+    },
+    <span class="function"><span class="keyword">function</span><span class="params">(err)</span></span> {
+        handleMyError(err);
+});
+</pre></td></tr></table></figure>
+
+<p>为了更好捕获错误处理，更好的代码应该这样：</p>
+<figure class="highlight [javascript]"><figcaption><span>[Overly Keen Error Handler - Fixed] </span></figcaption><table><tr><td class="gutter"><pre>1
+2
+3
+4
+5
+6
+7
+8
+</pre></td><td class="code"><pre>somethingAsync  
+    .<span class="keyword">then</span>(<span class="function"><span class="keyword">function</span><span class="params">()</span></span> {
+        <span class="keyword">return</span> somethingElseAsync();
+    })
+    .<span class="keyword">then</span>(null,
+        <span class="function"><span class="keyword">function</span><span class="params">(err)</span></span> {
+            handleMyError(err);
+        });
+</pre></td></tr></table></figure>
+
+<figure class="highlight [javascript]"><figcaption><span>[Overly Keen Error Handler - Another Fixed] </span></figcaption><table><tr><td class="gutter"><pre>1
+2
+3
+4
+5
+6
+7
+</pre></td><td class="code"><pre>somethingAsync  
+    .<span class="keyword">then</span>(<span class="function"><span class="keyword">function</span><span class="params">()</span> {</span>
+        <span class="keyword">return</span> somethingElseAsync();
+    })
+    .<span class="keyword">catch</span>(<span class="function"><span class="keyword">function</span><span class="params">(err)</span> {</span>
+        handleMyError(err);
+    });
+</pre></td></tr></table></figure>
+
+<p>当然个人感觉这个有点极端，如果 <code>handleMyError</code> 也有错误了，岂不是这种then写法永远没有完美的方式。
+我想promise对于错误捕获，应该是那些可预知的，对于不可预知的捕获或者不期望出现的，我觉得应该
+通过代码测试保证，比如语法错误等。当然promise的规范，导致可能任何不期望错误都会被捕获，导致平时
+开发调试测试会痛苦，因为我们更期望把这些错误抛出来，更早被发现，而不是被吞掉。对此，有些promise库
+会提供全局的错误监听和处理机制。</p>
+<h2 id="-promise">遗忘的Promise</h2>
+<p>经常我们在处理promise的响应时候，有时候想在后面链式操作时候，使用我们预处理过的数据，而不是直接使用
+直接响应的结果，通常我们会这么做：</p>
+<figure class="highlight [javascript]"><figcaption><span>[Forgotten Promise - Bad] </span></figcaption><table><tr><td class="gutter"><pre>1
+2
+3
+4
+5
+6
+7
+8
+9
+</pre></td><td class="code"><pre><span class="keyword">var</span> deferred = Q.defer();  
+doSomethingAsync().then(<span class="function"><span class="keyword">function</span><span class="params">(res)</span> {</span>  
+    res = manipulateMeInSomeWay(res);
+    deferred.resolve(res);
+}, <span class="function"><span class="keyword">function</span><span class="params">(err)</span> {</span>
+    deferred.reject(err);
+});
+
+<span class="keyword">return</span> deferred.promise;
+</pre></td></tr></table></figure>
+
+<p>当看到这样代码时候，我想在于我们没有真正理解promise的接口规范，只懂的链式操作 <code>then</code>，对于链式操作回调的
+参数没有真正弄明白。</p>
+<p>更好的代码应该是这样的：</p>
+<figure class="highlight [javascript]"><figcaption><span>[Forgotten Promise - Good] </span></figcaption><table><tr><td class="gutter"><pre>1
+2
+3
+</pre></td><td class="code"><pre><span class="keyword">return</span> doSomethingAsync().<span class="keyword">then</span>(<span class="function"><span class="keyword">function</span><span class="params">(res)</span></span> {  
+    <span class="keyword">return</span> manipulateMeInSomeWay(res);
+});
+</pre></td></tr></table></figure>
+
+<p>每个链式回调参数为上一个then回调处理返回的结果，当然如果上一个then回调返回是promise，则参数为该promise
+状态变更传入的参数。</p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+  <article class="post">
+  
+    <div class="gallery">
+  <div class="photoset">
+    
+      <img src="">
+    
+  </div>
+  <div class="control">
+    <div class="prev"></div>
+    <div class="next"></div>
+  </div>
+</div>
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2013-12-29T11:45:05.000Z"><a href="/blog/2013/12/29/jshint/">12月 29 2013</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/blog/2013/12/29/jshint/">jshint</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+  <article class="post">
+  
+    <div class="gallery">
+  <div class="photoset">
+    
+      <img src="">
+    
+  </div>
+  <div class="control">
+    <div class="prev"></div>
+    <div class="next"></div>
+  </div>
+</div>
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2013-07-21T04:19:58.000Z"><a href="/blog/2013/07/21/welcome/">7月 21 2013</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/blog/2013/07/21/welcome/">Welcome to SparkleMan Blog!</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>This blog builds based on <a href="http://zespia.tw/hexo" target="_blank">Hexo</a>! Check <a href="http://zespia.tw/hexo/docs/" target="_blank">documentation</a> to learn how to use.</p>
+<h2 id="-">准备阶段</h2>
+<p>Hexo是基于<a href="http://nodejs.org/" target="_blank">NodeJS</a>实现，用于快速撰写和发布blog，支持<a href="http://daringfireball.net/projects/markdown/" target="_blank">Markdown</a>，支持发布到<a href="http://pages.github.com/" target="_blank">GitHub Pages</a>。<a href="http://zespia.tw/" target="_blank">开发作者</a>是来自台湾。
+环境搭建及使用可以参见<a href="http://zespia.tw/hexo/docs/" target="_blank">Hexo官方文档</a>，已经写得非常清楚了。</p>
+<h2 id="-blog">撰写Blog</h2>
+<p>可以通过如下命令创建新的文章</p>
+<p><code>hexo new &quot;New Post&quot;</code> -&gt; source/_posts/new-post.md</p>
+<p><code>hexo new page &quot;New Page&quot;</code> -&gt; source/new-page/index.md</p>
+<p><code>hexo new draft &quot;New Draft&quot;</code> -&gt; source/_drafts/new-draft.md</p>
+<p>撰写Blog时候，可以启用hexo自带server，就可以本地查看自己写的blog，如果有修改，要自己手动再刷新下浏览器，不支持blog文章变化了自动触发浏览器刷新。</p>
+<p><code>hexo server [-p port]</code> 默认端口4000: <a href="http://localhost:4000" target="_blank"><a href="http://localhost:4000">http://localhost:4000</a></a></p>
+<h2 id="-github">部署到GitHub</h2>
+<p>这一过程碰到的最大问题，就是部署完之后，blog页面导航路径不对以及一些静态资源引用路径不对，这里需要看下自己theme的配置及其它路径配置是否正确。
+此外，除了基于hexo提供的deploy命令来部署到GitHub，其实也可以自己拉自己的仓库到本地，然后本地初始化自己的blog之后通过git提交。</p>
+<p>产生静态资源文件：<code>hexo generate</code></p>
+<p>部署到GitHub：<code>hexo deploy</code></p>
+<p>部署前重新产生一次静态资源文件：<code>hexo deploy --generate</code></p>
+<p>此外，还要注意的一点，通过命令行部署时候，有时候会提交失败，把当前<em>.deploy目录删除</em>，重新来一遍，就可以正常提交了。</p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+
+
+<nav id="pagination">
+  
+  
+  <div class="clearfix"></div>
+</nav></div></div>
+    <aside id="sidebar" class="alignright">
+  <div class="search">
+  <form action="//google.com/search" method="get" accept-charset="utf-8">
+    <input type="search" name="q" results="0" placeholder="搜索">
+    <input type="hidden" name="q" value="site:sparkleman.github.io/blog">
+  </form>
+</div>
+
+  
+
+  
+<div class="widget tag">
+  <h3 class="title">标签</h3>
+  <ul class="entry">
+  
+    <li><a href="/blog/tags/hexo/">hexo</a><small>1</small></li>
+  
+    <li><a href="/blog/tags/javascript jshint/">javascript jshint</a><small>1</small></li>
+  
+    <li><a href="/blog/tags/promise javascript/">promise javascript</a><small>1</small></li>
+  
+  </ul>
+</div>
+
+</aside>
+    <div class="clearfix"></div>
+  </div>
+  <footer id="footer" class="inner"><div class="alignleft">
+  
+  &copy; 2014 SparkleMan
+  
+</div>
+<div class="clearfix"></div></footer>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+<script src="/blog/js/jquery.imagesloaded.min.js"></script>
+<script src="/blog/js/gallery.js"></script>
+
+
+
+
+<link rel="stylesheet" href="/blog/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/blog/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+  $('.fancybox').fancybox();
+})(jQuery);
+</script>
+
+</body>
+</html>
