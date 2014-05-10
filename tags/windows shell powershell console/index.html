@@ -1,0 +1,192 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>windows shell powershell console | SparkleMan</title>
+  <meta name="author" content="SparkleMan">
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  
+  <meta property="og:site_name" content="SparkleMan"/>
+
+  
+    <meta property="og:image" content="undefined"/>
+  
+
+  <link href="/blog/favicon.png" rel="icon">
+  <link rel="alternate" href="/blog/atom.xml" title="SparkleMan" type="application/atom+xml">
+  <link rel="stylesheet" href="/blog/css/style.css" media="screen" type="text/css">
+  <!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+  
+</head>
+
+
+<body>
+  <header id="header" class="inner"><div class="alignleft">
+  <h1><a href="/blog/">SparkleMan</a></h1>
+  <h2><a href="/blog/">A ship in port is safe, but that is not what ships are built for.</a></h2>
+</div>
+<nav id="main-nav" class="alignright">
+  <ul>
+    
+      <li><a href="/blog">Home</a></li>
+    
+      <li><a href="/blog/archives">Archives</a></li>
+    
+  </ul>
+  <div class="clearfix"></div>
+</nav>
+<div class="clearfix"></div></header>
+  <div id="content" class="inner">
+    <div id="main-col" class="alignleft"><div id="wrapper">
+<h2 class="archive-title tag">windows shell powershell console</h2>
+
+
+  
+    <article class="post">
+  
+    <div class="gallery">
+  <div class="photoset">
+    
+      <img src="">
+    
+  </div>
+  <div class="control">
+    <div class="prev"></div>
+    <div class="next"></div>
+  </div>
+</div>
+  
+  <div class="post-content">
+    <header>
+      
+        <div class="icon"></div>
+        <time datetime="2014-05-10T04:18:57.000Z"><a href="/blog/2014/05/10/enhance-window-console/">5月 10 2014</a></time>
+      
+      
+  
+    <h1 class="title"><a href="/blog/2014/05/10/enhance-window-console/">加强 Windows 控制台程序</a></h1>
+  
+
+    </header>
+    <div class="entry">
+      
+        <p>用过 <code>linux shell</code> 人，会发现 <code>windows</code> 的控制台程序简直是弱爆了。虽然微软后续退出的 <code>powershell</code> 一定程度上提升了 <code>windows</code> 下的控制台程序能力，但是对于在控制台程序打开多标签等功能还比较欠缺。本文介绍几款对 <code>windows</code> 控制台程序加强的软件，由于只是初步涉猎，后续深入使用后，有更多体会再补充。</p>
+<h2 id="console2">Console2</h2>
+<p>并不提供 shell 能力，只是提供了一个用户界面，可以集成各种 shell，可以认为各种 shell 的一个壳，因此打开多标签啥的肯定没啥问题。</p>
+<ul>
+<li>开源软件</li>
+<li><a href="http://sourceforge.net/projects/console/files/" target="_blank">下载地址</a></li>
+<li>主要功能特性<ol>
+<li>支持多标签功能；</li>
+<li>支持可配置的字体、背景、透明度，文本选择、快捷键等；</li>
+<li>支持集成各种 shell， 包括控制台程序、powershell等；</li>
+</ol>
+</li>
+<li>缺点<ol>
+<li>不支持中文输入;</li>
+<li>无法最大化。</li>
+</ol>
+</li>
+</ul>
+<p><strong> 安装使用的注意点： </strong></p>
+<ol>
+<li>设置font的时候选择字符集为中欧字符集，否则中文会乱码</li>
+<li>如果不想切换窗口时候console始终在顶层，设置 <code>position</code> 为 <code>always on top</code></li>
+<li>打开控制台程序包括powershell都是显示错位，右对齐，解决办法：右键 <code>view-&gt;console window</code> 这时会弹出一个命令行窗口，点击标题栏右键选择属性，弹出设置框里选择字体 改成 宋体，确定保存退出，重新打开console2就好了。</li>
+<li>对于添加自定义的Tab的Shell，可以设置自定义的 Tab 的标题和 Icon，对于Icon设置，推荐一款软件：
+<a href="http://icofx.ro/" target="_blank">icofx</a>，不错的icon编辑和提取软件，可以提取应用程序的icon哦，选择带图标的exe文件，会自动提取该exe所对应的图标。</li>
+<li>快捷键修改， <code>ctrl s</code> 打开设置对话框，到HotKeys下对于 <code>new tab 1</code> (设成 ctrl + t)、<code>copy selection</code> (这里最好不要设成 ctrl + c，否则要中断程序就没用了，可以设成 ctrl + shift + c)、<code>paste</code> (设成 ctrl + v)。修改快捷键时候，通过按键来修改，修改完要点下 <code>assign</code> 按钮。</li>
+<li>可以在 <code>console</code> 选择里通过设置 <code>startup dir</code>，来设置每次启动命令行程序初始目录。</li>
+</ol>
+<h2 id="conemu">ConEmu</h2>
+<p>跟 <code>console2</code> 一样也是提供各种shell的壳，待慢慢研究后再补充。</p>
+<ul>
+<li>开源软件</li>
+<li><a href="https://github.com/Maximus5/ConEmu" target="_blank">官方网站</a></li>
+</ul>
+<h2 id="clink">Clink</h2>
+<p>加强 windows 的 cmd 程序的各种不足，比如输入补全等。对于 <code>powershell</code> 的输入补全，可以用这个 <a href="http://powertab.codeplex.com/" target="_blank">powerTab</a></p>
+<ul>
+<li>开源软件</li>
+<li><a href="http://mridgers.github.io/clink/" target="_blank">官方网站</a></li>
+</ul>
+<h2 id="-">参考</h2>
+<p><a href="http://www.cnblogs.com/bamanzi/archive/2012/06/27/windows-console-emulater.html" target="_blank"><a href="http://www.cnblogs.com/bamanzi/archive/2012/06/27/windows-console-emulater.html">http://www.cnblogs.com/bamanzi/archive/2012/06/27/windows-console-emulater.html</a></a></p>
+
+      
+    </div>
+    <footer>
+      
+        
+        
+      
+      <div class="clearfix"></div>
+    </footer>
+  </div>
+</article>
+
+
+  
+
+  <nav id="pagination">
+  
+  
+  <div class="clearfix"></div>
+</nav>
+</div></div>
+    <aside id="sidebar" class="alignright">
+  <div class="search">
+  <form action="//google.com/search" method="get" accept-charset="utf-8">
+    <input type="search" name="q" results="0" placeholder="搜索">
+    <input type="hidden" name="q" value="site:sparkleman.github.io/blog">
+  </form>
+</div>
+
+  
+
+  
+<div class="widget tag">
+  <h3 class="title">标签</h3>
+  <ul class="entry">
+  
+    <li><a href="/blog/tags/hexo/">hexo</a><small>1</small></li>
+  
+    <li><a href="/blog/tags/javascript jshint/">javascript jshint</a><small>1</small></li>
+  
+    <li><a href="/blog/tags/promise javascript/">promise javascript</a><small>1</small></li>
+  
+    <li><a href="/blog/tags/windows shell powershell console/">windows shell powershell console</a><small>1</small></li>
+  
+  </ul>
+</div>
+
+</aside>
+    <div class="clearfix"></div>
+  </div>
+  <footer id="footer" class="inner"><div class="alignleft">
+  
+  &copy; 2014 SparkleMan
+  
+</div>
+<div class="clearfix"></div></footer>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+<script src="/blog/js/jquery.imagesloaded.min.js"></script>
+<script src="/blog/js/gallery.js"></script>
+
+
+
+
+<link rel="stylesheet" href="/blog/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/blog/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+(function($){
+  $('.fancybox').fancybox();
+})(jQuery);
+</script>
+
+</body>
+</html>
